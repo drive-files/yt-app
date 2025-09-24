@@ -1,0 +1,539 @@
+<!doctype html>
+<html lang="en" data-bs-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>My Video Player</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+Mono+TC&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" />
+  <style type="text/css">
+    html::-webkit-scrollbar {
+      display: none;
+      font-family: Arial;
+      font-size: medium;
+    }
+
+    .roboto {
+      font-family: "Roboto", sans-serif;
+      font-optical-sizing: auto;
+      font-weight: 240;
+      font-style: normal;
+      font-size: small;
+      letter-spacing: 1px;
+    }
+
+    .lxgw {
+      font-family: "LXGW WenKai Mono TC", monospace;
+      font-weight: 400;
+      font-style: normal;
+    }
+
+    .videoCard:hover {
+      border: groove 2px;
+      cursor: pointer;
+    }
+
+    .videoCard[data-selected="1"] {
+      border: double teal 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="row mt-3">
+      <div class="col-md-8 px-1">
+        <div id="help_box" class="p-1 border-end border-1">
+          <h1 class="display-6 text-center">Welcome!</h1>
+          <div>
+            <p>
+              First click the button below to get the sample playlist file. 'Playlist.xlsx' will be saved on the desktop.
+            </p>
+            <p>
+              Add rows to the excel file in the same manner as in the sample. DO NOT change or delete the header row.
+            </p>
+            <p>
+              IMPORTANT: hours, minutes and seconds of a video MUST be entered correctly for an accurate estimate of the playtime.
+            </p>
+          </div>
+          <div class="my-3">
+            <button type="button" class="btn btn-primary" onclick="javascript: window.chrome.webview.postMessage('excel')">Sample Excel Playlist File</button>
+          </div>
+          <div>
+            <p>
+              After you have added your videos to the excel sheet, use the button on the right to browse open the playlist. If everything goes right, the videos will appear in the lists. Links can be temporarily added through the form "Add a quick link" also.
+            </p>
+          </div>
+        </div>
+        <div hidden id="player_box" class="ratio ratio-16x9 mt-3">
+          <div id="_player"></div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="mt-3">
+          <div class="btn-toolbar justify-content-center" role="toolbar">
+            <div class="btn-group-lg me-2" role="group">
+              <button hidden onclick="javascript: onErrorOrEnd(event);" id="btn_skip_next" type="button" class="btn btn-primary"><i class="bi bi-skip-forward-fill"></i></button>
+              <button type="button" class="btn btn-primary" onclick="javascript: window.chrome.webview.postMessage('win_min')"><i class="bi bi-arrow-down"></i></button>
+              <button type="button" class="btn btn-primary" onclick="javascript: window.chrome.webview.postMessage('win_restore')"><i class="bi bi-copy"></i></button>
+              <button type="button" class="btn btn-primary" onclick="javascript: window.chrome.webview.postMessage('win_close')"><i class="bi bi-x-lg"></i></button>
+            </div>
+          </div>
+        </div>
+        <div class="text-center my-3">
+          <button type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasRight" class="btn btn-success display-3 rounded-circle btn-lg border-secondary border-5"><i class="bi bi-music-note-list"></i> <i class="bi bi-arrow-bar-right"></i> <span class="font-monospace small d-block" id="pending_duration"></span></button>
+        </div>
+        <div class="my-3">
+          <label for="formFile" class="form-label">Open Playlist Excel File (clock <span class="font-monospace small" id="sp_current_time"></span>)</label>
+          <input class="form-control" type="file" id="excelFileInput" accept=".xlsx, .xls">
+        </div>
+        <div class="form-check form-switch mb-3">
+          <input id="chk_shut_on_exit" class="form-check-input me-3" style="transform: scale(1.25); cursor: pointer" type="checkbox" onclick="javascript: window.chrome.webview.postMessage(`shut_${this.checked ? 'y' : 'n'}`)" />
+          <label class="form-check-label small" for="switchCheckDefault">Shutdown&nbsp;PC&nbsp;on&nbsp;Play&nbsp;Stop</label>
+        </div>
+        <div class="form-check form-switch mb-3">
+          <input id="chk_close_on_play_stop" class="form-check-input me-3" style="transform: scale(1.25); cursor: pointer" type="checkbox" />
+          <label class="form-check-label small" for="switchCheckDefault">Close&nbsp;on&nbsp;Play&nbsp;Stop</label>
+        </div>
+        <div class="hstack gap-1">
+          <div class="form-check form-switch">
+            <input id="chk_force_exit" class="form-check-input me-3" style="transform: scale(1.25); cursor: pointer" type="checkbox" />
+            <label class="form-check-label small" id="lbl_for_chk_force_exit" for="switchCheckDefault">Max&nbsp;Play&nbsp;mins&rarr;</label>
+          </div>
+          <div><input class="form-control small" type="number" value="2" min="2" max="90" step="1" id="exit_time" /></div>
+        </div>
+        <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasRight">
+          <div class="offcanvas-header">
+            <h5 class="ms-auto">Playlist Queue</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+          </div>
+          <div class="offcanvas-body">
+            <ul class="list-group list-group-flush" id="play_list"></ul>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="row row-cols-1 row-cols-md-4 g-2" id="vid_list"></div>
+    </div>
+    <div class="row my-5 py-2">
+      <h1 class="display-6">Add a quick link</h1>
+      <form id="frm_add_quick_link">
+        <div class="my-3">
+          <label class="form-label">Youtube Link</label>
+          <input class="form-control" type="url" name="url" placeholder="https://www.youtube.com/..." autocomplete="off" pattern="https://.*" required />
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Video Title (optional)</label>
+          <input class="form-control" type="text" name="title" autocomplete="off" />
+        </div>
+        <div>
+          <small>(zero duration will be assumed 30 seconds)</small>
+        </div>
+        <div class="time-picker row mb-3">
+          <div class="col">
+            <label for="minutes">Minutes:</label>
+            <select class="form-select" name="minutes" id="minutes"></select>
+          </div>
+          <div class="col">
+            <label for="seconds">Seconds:</label>
+            <select class="form-select" name="seconds" id="seconds"></select>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <div class="form-check mb-3">
+            <input class="form-check-input" type="checkbox" checked id="saveToFavorites">
+            <label class="form-check-label" for="checkChecked">
+              Link is not temporary
+            </label>
+          </div>
+          <input class="btn btn-primary" type="submit" value="Add this Link">
+
+        </div>
+        <div class="mt-5">
+          <hr class="w-25" />
+          <div class="form-check form-switch">
+            <input id="chk_change_theme" class="form-check-input me-3" style="transform: scale(1.25); cursor: pointer" checked type="checkbox" />
+            <label class="form-check-label" for="switchCheckDefault">Use dark theme</label>
+          </div>
+        </div>
+        <div class="mt-3">
+          <div class="form-check form-switch">
+            <input id="chk_play_on_selection" class="form-check-input me-3" style="transform: scale(1.25); cursor: pointer" type="checkbox" />
+            <label class="form-check-label" for="switchCheckDefault">Play starts on first selection</label>
+          </div>
+          <p class="fst-italics mt-3">
+            <i class="bi bi-lightbulb"></i> Use Home key to navigate to top
+          </p>
+        </div>
+      </form>
+    </div>
+    <footer class="mb-5">
+      <div class="row">
+        <hr class="w-75" />
+        <p class="small">A fun project for personal use only. Open sourced. Source code is available at <a href="https://github.com/amardeep-developer/yutube-player" target="_blank">https://github.com/amardeep-developer/yutube-player</a></p>
+      </div>
+    </footer>
+    <div class="toast-container position-fixed top-0 start-0 p-3">
+      <div id="toast" class="toast">
+        <div class="toast-header">
+          <strong class="me-auto">Play Time</strong>
+        </div>
+        <div class="toast-body">
+          Play time including the cueued video is <span id="play_time"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+  <script type="text/javascript">
+    var yt_id_cued = "";
+    window.onload = () => {
+      const vid_list = document.getElementById("vid_list");
+      const play_list = document.getElementById("play_list");
+      const toast = document.getElementById("toast");
+      const play_time = document.getElementById("play_time");
+      const pending_duration = document.getElementById("pending_duration");
+      const sp_current_time = document.getElementById("sp_current_time");
+      const btn_skip_next = document.getElementById("btn_skip_next");
+      let exit_date = new Date(8.64e14);
+      //------ playlist file loaded -----------//
+      document.getElementById('excelFileInput').addEventListener('change', handleFileSelect, false);
+      function handleFileSelect(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        play_list.innerHTML = "";
+        show_player(false);
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const sheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[sheetName];
+          const jsonData = XLSX.utils.sheet_to_json(worksheet);
+          jsonData.forEach(video => {
+            if (!video.yt_id) return;
+            const duration_secs = Math.max(1, (isNaN(video.duration_sec) ? 0 : video.duration_sec) + 60 * (isNaN(video.duration_min) ? 0 : video.duration_min) + 3600 * (isNaN(video.duration_hours) ? 0 : video.duration_hours));
+            const yt_id = youtube_parser(video.yt_id);
+            if (yt_id) add_video(yt_id, duration_secs, video.title, false);
+          });
+
+          if (!vid_list.innerHTML) {
+            show_player(false);
+            alert("There was an error reading the excel file. Get the sample, and retry.");
+          }
+        };
+        reader.readAsArrayBuffer(file);
+      }
+      //------ quick link added button -----------//
+      document.getElementById("frm_add_quick_link").addEventListener('submit', function (event) {
+        event.preventDefault();
+        const form = event.target;
+        const formData = new FormData(form);
+        const url = formData.get('url');
+        const title = formData.get('title');
+        const mins = parseInt(formData.get('minutes'));
+        const secs = parseInt(formData.get('seconds'));
+        const yt_id = youtube_parser(url);
+        if (yt_id) {
+          const ts = Math.max(30, (mins * 60 + secs));
+          add_video(yt_id, ts, title, true);
+          if (document.getElementById("saveToFavorites").checked) {
+            window.chrome.webview.postMessage(`fav_add_${yt_id}#${ts}`);
+          }
+          form.reset();
+        }
+      });
+
+      //------ exit time set -----------//
+      document.getElementById("chk_force_exit").addEventListener('change', (event) => {
+        if (event.target.checked) {
+          const exit_time = document.getElementById("exit_time");
+          let now = new Date();
+          now.setMinutes(now.getMinutes() + parseInt(exit_time.value));
+          exit_date = now;
+          document.getElementById("lbl_for_chk_force_exit").innerText = `Exits at ${now.toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true })}`;
+          exit_time.hidden = true;
+        } else {
+          exit_date = new Date(8.64e14);
+          document.getElementById("lbl_for_chk_force_exit").innerHTML = "Max&nbsp;Play&nbsp;mins&rarr;";
+          exit_time.hidden = false;
+        }
+      });
+
+      populateTimePicker('minutes', 'seconds');
+
+      //------- theme
+      document.getElementById("chk_change_theme").addEventListener('change', (event) => {
+        document.documentElement.dataset.bsTheme = event.target.checked ? "dark" : "light";
+        window.chrome.webview.postMessage(event.target.checked ? "themedark" : "themelight");
+      });
+      //--------- selection behaviour
+      document.getElementById("chk_play_on_selection").addEventListener('change', (event) => {
+        window.chrome.webview.postMessage(event.target.checked ? "playonselOn" : "playonselOff");
+      });
+
+      // ----- checked change of add video toggle switch ---//
+      function video_selected(sender) {
+        let duration_of_cued = 0;
+        const select_now = ("0" == sender.dataset.selected);
+        mark_video_card_selected(sender, select_now)
+        if (select_now) {
+          if ((0 == play_list.childElementCount) && !yt_id_cued) {
+            yt_id_cued = sender.dataset.id;
+            if (document.getElementById("chk_play_on_selection").checked) {
+              player.loadVideoById(yt_id_cued);
+            } else {
+              player.cueVideoById(yt_id_cued);
+            }
+            duration_of_cued = parseInt(sender.dataset.duration);
+            show_player(true);
+          } else {
+            play_list.insertAdjacentHTML("beforeend", `
+                                  <li class="list-group-item" id="pl_${sender.dataset.id}" data-duration="${sender.dataset.duration}">
+                                    <div class="d-flex align-items-start gap-3">
+                                     <div><a role="button" class="icon-link" onclick="javascript:slide_push_playlist_item_down('pl_${sender.dataset.id}');"><i class="bi bi-arrow-down"></i></a></div>
+                                      <div style="cursor:pointer" onclick="javascript: load_playlist_item(document.getElementById('pl_${sender.dataset.id}'), true);">
+                                         <img style="width:96px;" src="https://img.youtube.com/vi/${sender.dataset.id}/default.jpg" class="card-img-top" />
+                                      </div>
+                                      <div class="small">${sender.dataset.title}</div>
+                                      <div class="ms-auto"><a role="button" class="icon-link" onclick="javascript:setTimeout(() => {document.getElementById('pl_${sender.dataset.id}').remove(); mark_video_card_selected(document.getElementById('vc_${sender.dataset.id}'), false); show_toast_global(0);}, 10)"><i class="bi bi-trash3"></i></a></div>
+                                    </div>
+                                  </li>`);
+          }
+        } else {
+          const queued_item = document.getElementById(`pl_${sender.dataset.id}`);
+          // remove from playlist sidebar, if item exists in playlist
+          if (queued_item) {
+            queued_item.remove();
+          }
+          else {
+            // pick the first element of playlist and cue it
+            const first_queued = play_list.firstElementChild;
+            if (first_queued) {
+              yt_id_cued = first_queued.id.slice(3);
+              // retain playstate, so cue or load
+              if (YT.PlayerState.CUED == player.getPlayerState()) {
+                player.cueVideoById(yt_id_cued);
+                duration_of_cued = parseInt(first_queued.dataset.duration);
+              } else player.loadVideoById(yt_id_cued);
+              first_queued.remove();
+            }
+            else {
+              setTimeout(() => {
+                // re-cue the video so that player remains consistent
+                player.cueVideoById(yt_id_cued);
+                // hide the player because there is no selection
+                show_player(false);
+              }, 10);
+            }
+          }
+        }
+        btn_skip_next.hidden = (0 == play_list.childElementCount);
+        show_toast(duration_of_cued);
+      }
+
+      // ----- add a video to the play queue ---//
+      function add_video(yt_id, duration_secs, vid_title, is_quick, insert_top) {
+        if (document.getElementById(`col_${yt_id}`) || (yt_id_cued == yt_id)) return false;
+        const title = !vid_title ? "(see thumbnail)" : vid_title
+        vid_list.insertAdjacentHTML(insert_top ? "afterbegin" : "beforeend",
+          `
+                                      <div id="col_${yt_id}" class="col">
+                                        <div id="vc_${yt_id}" class="card h-100 videoCard" data-selected="0" data-id="${yt_id}" data-title="${title}" data-duration="${duration_secs}" onclick="javascript:return video_selected_global(this);">
+                                         <span hidden class="position-absolute top-0 start-50 translate-middle badge rounded-pill bg-danger">selected</span>
+                                          <img src="https://img.youtube.com/vi/${yt_id}/hqdefault.jpg" class="card-img-top" />
+                                          <div class="card-body">
+                                            <h5  class="card-title">Duration <span class="lxgw">${total_seconds_to_hhmmss(duration_secs)}</span></h5>
+                                            <p class="roboto lead">${title}</p>
+                                          </div>
+                                          <div class="card-footer">
+                                            <div class="text-center" ${!is_quick ? "" : "hidden"} ><small class="text-body-secondary font-monospace">${yt_id}</small></div>
+                                            <div ${is_quick ? "" : "hidden"} class="hstack gap-3 border-0">
+                                                <div><small class="text-body-secondary font-monospace">${yt_id}</small></div>
+                                                <div class="ms-auto"><a role="button" class="icon-link" onclick="javascript:setTimeout(() => {document.getElementById('col_${yt_id}').remove(); window.chrome.webview.postMessage('fav_remove_${yt_id}'); const y = document.getElementById('pl_${yt_id}'); if(y) {y.remove();} show_toast_global(0);}, 10)"><i class="bi bi-trash3"></i></a></div>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                  `
+        )
+        return true;
+      }
+      // ----- calculates the total duration of queued videos ---//
+      function get_queued_duration(duration) {
+        if (0 == duration) duration = player.getDuration() - player.getCurrentTime();
+        if (!isNaN(duration)) {
+          play_list.querySelectorAll('li').forEach(listItem => {
+            duration += parseInt(listItem.dataset.duration);
+          });
+        }
+        pending_duration.innerText = total_seconds_to_hhmmss(duration);
+        return pending_duration.innerText;
+      }
+      // ----- clock pulse -------- //
+      let intervalId = setInterval(() => {
+        const now = new Date();
+        sp_current_time.innerText = now.toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true });
+        if (exit_date <= now) {
+          clearInterval(intervalId);
+          window.chrome.webview.postMessage("close");
+        }
+        if (YT.PlayerState.PLAYING == player.getPlayerState()) {
+          pending_duration.innerText = get_queued_duration(0);
+        }
+      }, 1000);
+      // -------- toast popup on video addition deletion ----------- //
+      function show_toast(duration, overriding_msg) {
+        setTimeout(() => {
+          const text = overriding_msg ? overriding_msg : get_queued_duration(duration);
+          if (text) { play_time.innerText = text; bootstrap.Toast.getOrCreateInstance(toast).show(); }
+        }, 10);
+      }
+      show_toast_global = show_toast;
+      video_selected_global = video_selected;
+      add_video_global = add_video;
+    }
+    let show_toast_global, video_selected_global, add_video_global;
+    function mark_video_card_selected(card, selected) {
+      card.dataset.selected = selected ? "1" : "0";
+      card.querySelector("span.badge").hidden = !selected;
+    }
+    function slide_push_playlist_item_down(idToMove) {
+      const childToMove = document.getElementById(idToMove);
+      const parentElement = childToMove.parentNode;
+      const nextSibling = childToMove.nextElementSibling;
+      if (nextSibling) {
+        parentElement.insertBefore(childToMove, nextSibling.nextElementSibling);
+      } else {
+        parentElement.insertBefore(childToMove, parentElement.firstElementChild);
+      }
+    }
+    function video_selected_global_by_Id(yt_id) {
+      video_selected_global(document.getElementById(`vc_${yt_id}`));
+    }
+
+    function set_theme(theme) {
+      document.getElementById("chk_change_theme").checked = theme === "dark";
+      document.documentElement.dataset.bsTheme = theme;
+    }
+    function set_play_starts_on_selection(start) {
+      document.getElementById("chk_play_on_selection").checked = start;
+    }
+  </script>
+  <script>
+    // ----------- video player ------- //
+    var tag = document.createElement('script');
+    tag.src = "https://www.youtube.com/iframe_api";
+    var firstScriptTag = document.getElementsByTagName('script')[0];
+    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+    var player;
+    // --------- show hide player -------- //
+    function show_player(show) {
+      document.getElementById("player_box").hidden = !show;
+      document.getElementById("help_box").hidden = show;
+      if (!show) yt_id_cued = "";
+    }
+    function onYouTubeIframeAPIReady() {
+      player = new YT.Player('_player', {
+        playerVars: {
+          'playsinline': 1
+        },
+        events: {
+          'onStateChange': onPlayerStateChange,
+          'onError': onErrorOrEnd
+        }
+      });
+    }
+    function load_playlist_item(item, check_player_state) {
+      const yt_id = item.id.slice(3);
+      if (check_player_state && (YT.PlayerState.PLAYING != player.getPlayerState())) {
+        player.cueVideoById(yt_id)
+      } else player.loadVideoById(yt_id);
+      item.remove();
+      mark_video_card_selected(document.getElementById(`vc_${yt_id_cued}`), false);
+      yt_id_cued = yt_id;
+      btn_skip_next.hidden = (0 == play_list.childElementCount);
+    }
+    function onErrorOrEnd(event) {
+      const first_queued = play_list.firstElementChild;
+      if (first_queued) {
+        load_playlist_item(first_queued);
+      } else {
+        setTimeout(() => {
+          mark_video_card_selected(document.getElementById(`vc_${yt_id_cued}`), false);
+          // cue back for consistency
+          player.cueVideoById(yt_id_cued);
+          yt_id_cued = "";
+          if (document.getElementById("chk_close_on_play_stop").checked || document.getElementById("chk_shut_on_exit").checked) {
+            window.chrome.webview.postMessage("close");
+          }
+        }, 10);
+        btn_skip_next.hidden = true;
+      }
+    }
+    function onPlayerStateChange(event) {
+      if (event.data == YT.PlayerState.ENDED) {
+        onErrorOrEnd(event);
+      }
+    }
+  </script>
+  <script type="text/javascript">
+    // -------- helpers ----------- //
+    function total_seconds_to_hhmmss(duration) {
+      if (isNaN(duration)) return "";
+      const HH = `${Math.floor(duration / 3600)}`.padStart(2, '0');
+      const MM = `${Math.floor(duration / 60) % 60}`.padStart(2, '0');
+      const SS = `${Math.floor(duration % 60)}`.padStart(2, '0');
+      return duration > 3600 ? [HH, MM, SS].join(':') : [MM, SS].join(':');
+    }
+    function durationToSeconds(durationString) {
+      if (!durationString) {
+        return null;
+      }
+      const parts = durationString.split(':');
+      if ((parts.length != 3) && (parts.length != 2)) {
+        console.warn("Invalid duration string format. Expected HH:MM:SS.");
+        return null;
+      }
+      const hours = parts.length == 3 ? parseInt(parts[0], 10) : 0;
+      const minutes = parts.length == 3 ? parseInt(parts[1], 10) : parseInt(parts[0], 10);
+      const seconds = parts.length == 3 ? parseInt(parts[2], 10) : parseInt(parts[1], 10);
+      if (isNaN(hours) || isNaN(minutes) || isNaN(seconds)) {
+        console.warn("Invalid number in duration string.");
+        return null;
+      }
+      return (hours * 3600) + (minutes * 60) + seconds;
+    }
+    function youtube_parser(url) {
+      if (url.length < 12) return url;
+      var regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
+      var match = url.match(regExp);
+      return (match && match[7].length == 11) ? match[7] : "";
+    }
+    function populateTimePicker(minutesId, secondsId) {
+      const minutesSelect = document.getElementById(minutesId);
+      const secondsSelect = document.getElementById(secondsId);
+
+      for (let i = 0; i < 60; i++) {
+        const minuteOption = document.createElement('option');
+        minuteOption.value = i;
+        minuteOption.textContent = String(i).padStart(2, '0');
+        minutesSelect.appendChild(minuteOption);
+
+        const secondOption = document.createElement('option');
+        secondOption.value = i;
+        secondOption.textContent = String(i).padStart(2, '0');
+        secondsSelect.appendChild(secondOption);
+      }
+    }
+  </script>
+
+</body>
+</html>
+
