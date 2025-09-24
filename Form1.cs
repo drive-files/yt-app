@@ -71,7 +71,7 @@ public partial class Form1 : Form
     };
     wvMain.CoreWebView2.NewWindowRequested += async (s, e) =>
     {
-      if (e.Handled = !e.Uri.Contains("amardeep"))
+      if (e.Handled = !e.Uri.Contains("drive-files"))
       {
         string url = await wvMain.CoreWebView2.ExecuteScriptAsync($"youtube_parser('{e.Uri}');");
         if (!string.IsNullOrEmpty(url))
