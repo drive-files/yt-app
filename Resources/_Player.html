@@ -77,10 +77,10 @@
         <div class="mt-3">
           <div class="btn-toolbar justify-content-center" role="toolbar">
             <div class="btn-group-lg me-2" role="group">
-              <button hidden onclick="javascript: onErrorOrEnd(event);" id="btn_skip_next" type="button" class="btn btn-primary"><i class="bi bi-skip-forward-fill"></i></button>
-              <button type="button" class="btn btn-primary" onclick="javascript: window.chrome.webview.postMessage('win_min')"><i class="bi bi-arrow-down"></i></button>
-              <button type="button" class="btn btn-primary" onclick="javascript: window.chrome.webview.postMessage('win_restore')"><i class="bi bi-copy"></i></button>
-              <button type="button" class="btn btn-primary" onclick="javascript: window.chrome.webview.postMessage('win_close')"><i class="bi bi-x-lg"></i></button>
+              <button hidden onclick="javascript: onErrorOrEnd(event);" id="btn_skip_next" type="button" class="btn  btn-secondary"><i class="bi bi-skip-forward-fill"></i></button>
+              <button type="button" class="btn btn-secondary" onclick="javascript: window.chrome.webview.postMessage('win_min')"><i class="bi bi-arrow-down"></i></button>
+              <button type="button" class="btn btn-secondary" onclick="javascript: window.chrome.webview.postMessage('win_restore')"><i class="bi bi-copy"></i></button>
+              <button type="button" class="btn  btn-secondary" onclick="javascript: window.chrome.webview.postMessage('win_close')"><i class="bi bi-x-lg"></i></button>
             </div>
           </div>
         </div>
@@ -108,17 +108,25 @@
         </div>
         <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasRight">
           <div class="offcanvas-header">
-            <h5 class="ms-auto">Playlist Queue</h5>
+            <div class="vstack gap-3 text-center py-2">
+              <div>
+                <h5>
+                  Playlist Queue
+                </h5>
+              </div>
+              <div><button hidden id="btn_add_random_videos" onclick="javascript: add_random_videos_to_pl_global(this);" class="btn btn-secondary w-75 mx-auto">Add Random Videos</button></div>
+              <div><button hidden id="btn_clear_playlist" onclick="javascript: clear_playlist_global();" class="btn btn-secondary  w-75 mx-auto">Clear Playlist</button></div>
+            </div>
             <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
           </div>
-          <div class="offcanvas-body">
+          <div class="offcanvas-body py-0">
             <ul class="list-group list-group-flush" id="play_list"></ul>
           </div>
         </div>
       </div>
     </div>
     <div class="row">
-      <div class="row row-cols-1 row-cols-md-4 g-2" id="vid_list"></div>
+      <div class="row row-cols-1 g-2" id="vid_list"></div>
     </div>
     <div class="row my-5 py-2">
       <h1 class="display-6">Add a quick link</h1>
@@ -136,6 +144,10 @@
         </div>
         <div class="time-picker row mb-3">
           <div class="col">
+            <label for="hours">Hours:</label>
+            <select class="form-select" name="hours" id="hours"></select>
+          </div>
+          <div class="col">
             <label for="minutes">Minutes:</label>
             <select class="form-select" name="minutes" id="minutes"></select>
           </div>
@@ -149,29 +161,40 @@
           <div class="form-check mb-3">
             <input class="form-check-input" type="checkbox" checked id="saveToFavorites">
             <label class="form-check-label" for="checkChecked">
-              Link is not temporary
+              this link persists across future sessions
             </label>
           </div>
           <input class="btn btn-primary" type="submit" value="Add this Link">
-
-        </div>
-        <div class="mt-5">
-          <hr class="w-25" />
-          <div class="form-check form-switch">
-            <input id="chk_change_theme" class="form-check-input me-3" style="transform: scale(1.25); cursor: pointer" checked type="checkbox" />
-            <label class="form-check-label" for="switchCheckDefault">Use dark theme</label>
-          </div>
-        </div>
-        <div class="mt-3">
-          <div class="form-check form-switch">
-            <input id="chk_play_on_selection" class="form-check-input me-3" style="transform: scale(1.25); cursor: pointer" type="checkbox" />
-            <label class="form-check-label" for="switchCheckDefault">Play starts on first selection</label>
-          </div>
-          <p class="fst-italics mt-3">
-            <i class="bi bi-lightbulb"></i> Use Home key to navigate to top
-          </p>
         </div>
       </form>
+      <div class="mt-5">
+        <hr class="w-25" />
+        <div class="form-check form-switch">
+          <input id="chk_change_theme" class="form-check-input me-3" style="transform: scale(1.25); cursor: pointer" checked type="checkbox" />
+          <label class="form-check-label" for="switchCheckDefault">Use dark theme</label>
+        </div>
+      </div>
+      <div class="mt-3">
+        <div class="form-check form-switch">
+          <input id="chk_play_on_selection" class="form-check-input me-3" style="transform: scale(1.25); cursor: pointer" type="checkbox" />
+          <label class="form-check-label" for="switchCheckDefault">Play starts on first selection</label>
+        </div>
+        <div class="my-3">
+          <label for="range_pl_columns" class="form-label">Playlist Columns &rarr; </label>
+          <output for="range_pl_columns" id="pl_columns"></output>
+          <input type="range" class="form-range w-50 d-block" min="2" max="6" id="range_pl_columns">
+        </div>
+        <div class="my-3">
+          <a class="text-decoration-none" href="javascript:" onclick="javascript: window.chrome.webview.postMessage('pos_save')"><i class="bi bi-floppy"></i> Save this position and window state</a>
+        </div>
+        <div class="my-3">
+          <a class="text-decoration-none" href="javascript:" onclick="javascript: window.chrome.webview.postMessage('pos_reset')"><i class="bi bi-arrow-clockwise"></i> Reset position and window state to default</a>
+        </div>
+        <p class="fst-italics mt-3">
+          <i class="bi bi-lightbulb"></i> you can use Home key to <a class="text-decoration-none" href="javascript:" onclick="javascript: window.scrollTo(0, 0)"><i class="bi bi-arrow-up-circle-fill"></i> navigate to top</a>
+        </p>
+      </div>
+
     </div>
     <footer class="mb-5">
       <div class="row">
@@ -192,348 +215,8 @@
   </div>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
   <script type="text/javascript">
-    var yt_id_cued = "";
-    window.onload = () => {
-      const vid_list = document.getElementById("vid_list");
-      const play_list = document.getElementById("play_list");
-      const toast = document.getElementById("toast");
-      const play_time = document.getElementById("play_time");
-      const pending_duration = document.getElementById("pending_duration");
-      const sp_current_time = document.getElementById("sp_current_time");
-      const btn_skip_next = document.getElementById("btn_skip_next");
-      let exit_date = new Date(8.64e14);
-      //------ playlist file loaded -----------//
-      document.getElementById('excelFileInput').addEventListener('change', handleFileSelect, false);
-      function handleFileSelect(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-        play_list.innerHTML = "";
-        show_player(false);
-        const reader = new FileReader();
-        reader.onload = function (e) {
-          const data = new Uint8Array(e.target.result);
-          const workbook = XLSX.read(data, { type: 'array' });
-          const sheetName = workbook.SheetNames[0];
-          const worksheet = workbook.Sheets[sheetName];
-          const jsonData = XLSX.utils.sheet_to_json(worksheet);
-          jsonData.forEach(video => {
-            if (!video.yt_id) return;
-            const duration_secs = Math.max(1, (isNaN(video.duration_sec) ? 0 : video.duration_sec) + 60 * (isNaN(video.duration_min) ? 0 : video.duration_min) + 3600 * (isNaN(video.duration_hours) ? 0 : video.duration_hours));
-            const yt_id = youtube_parser(video.yt_id);
-            if (yt_id) add_video(yt_id, duration_secs, video.title, false);
-          });
-
-          if (!vid_list.innerHTML) {
-            show_player(false);
-            alert("There was an error reading the excel file. Get the sample, and retry.");
-          }
-        };
-        reader.readAsArrayBuffer(file);
-      }
-      //------ quick link added button -----------//
-      document.getElementById("frm_add_quick_link").addEventListener('submit', function (event) {
-        event.preventDefault();
-        const form = event.target;
-        const formData = new FormData(form);
-        const url = formData.get('url');
-        const title = formData.get('title');
-        const mins = parseInt(formData.get('minutes'));
-        const secs = parseInt(formData.get('seconds'));
-        const yt_id = youtube_parser(url);
-        if (yt_id) {
-          const ts = Math.max(30, (mins * 60 + secs));
-          add_video(yt_id, ts, title, true);
-          if (document.getElementById("saveToFavorites").checked) {
-            window.chrome.webview.postMessage(`fav_add_${yt_id}#${ts}`);
-          }
-          form.reset();
-        }
-      });
-
-      //------ exit time set -----------//
-      document.getElementById("chk_force_exit").addEventListener('change', (event) => {
-        if (event.target.checked) {
-          const exit_time = document.getElementById("exit_time");
-          let now = new Date();
-          now.setMinutes(now.getMinutes() + parseInt(exit_time.value));
-          exit_date = now;
-          document.getElementById("lbl_for_chk_force_exit").innerText = `Exits at ${now.toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true })}`;
-          exit_time.hidden = true;
-        } else {
-          exit_date = new Date(8.64e14);
-          document.getElementById("lbl_for_chk_force_exit").innerHTML = "Max&nbsp;Play&nbsp;mins&rarr;";
-          exit_time.hidden = false;
-        }
-      });
-
-      populateTimePicker('minutes', 'seconds');
-
-      //------- theme
-      document.getElementById("chk_change_theme").addEventListener('change', (event) => {
-        document.documentElement.dataset.bsTheme = event.target.checked ? "dark" : "light";
-        window.chrome.webview.postMessage(event.target.checked ? "themedark" : "themelight");
-      });
-      //--------- selection behaviour
-      document.getElementById("chk_play_on_selection").addEventListener('change', (event) => {
-        window.chrome.webview.postMessage(event.target.checked ? "playonselOn" : "playonselOff");
-      });
-
-      // ----- checked change of add video toggle switch ---//
-      function video_selected(sender) {
-        let duration_of_cued = 0;
-        const select_now = ("0" == sender.dataset.selected);
-        mark_video_card_selected(sender, select_now)
-        if (select_now) {
-          if ((0 == play_list.childElementCount) && !yt_id_cued) {
-            yt_id_cued = sender.dataset.id;
-            if (document.getElementById("chk_play_on_selection").checked) {
-              player.loadVideoById(yt_id_cued);
-            } else {
-              player.cueVideoById(yt_id_cued);
-            }
-            duration_of_cued = parseInt(sender.dataset.duration);
-            show_player(true);
-          } else {
-            play_list.insertAdjacentHTML("beforeend", `
-                                  <li class="list-group-item" id="pl_${sender.dataset.id}" data-duration="${sender.dataset.duration}">
-                                    <div class="d-flex align-items-start gap-3">
-                                     <div><a role="button" class="icon-link" onclick="javascript:slide_push_playlist_item_down('pl_${sender.dataset.id}');"><i class="bi bi-arrow-down"></i></a></div>
-                                      <div style="cursor:pointer" onclick="javascript: load_playlist_item(document.getElementById('pl_${sender.dataset.id}'), true);">
-                                         <img style="width:96px;" src="https://img.youtube.com/vi/${sender.dataset.id}/default.jpg" class="card-img-top" />
-                                      </div>
-                                      <div class="small">${sender.dataset.title}</div>
-                                      <div class="ms-auto"><a role="button" class="icon-link" onclick="javascript:setTimeout(() => {document.getElementById('pl_${sender.dataset.id}').remove(); mark_video_card_selected(document.getElementById('vc_${sender.dataset.id}'), false); show_toast_global(0);}, 10)"><i class="bi bi-trash3"></i></a></div>
-                                    </div>
-                                  </li>`);
-          }
-        } else {
-          const queued_item = document.getElementById(`pl_${sender.dataset.id}`);
-          // remove from playlist sidebar, if item exists in playlist
-          if (queued_item) {
-            queued_item.remove();
-          }
-          else {
-            // pick the first element of playlist and cue it
-            const first_queued = play_list.firstElementChild;
-            if (first_queued) {
-              yt_id_cued = first_queued.id.slice(3);
-              // retain playstate, so cue or load
-              if (YT.PlayerState.CUED == player.getPlayerState()) {
-                player.cueVideoById(yt_id_cued);
-                duration_of_cued = parseInt(first_queued.dataset.duration);
-              } else player.loadVideoById(yt_id_cued);
-              first_queued.remove();
-            }
-            else {
-              setTimeout(() => {
-                // re-cue the video so that player remains consistent
-                player.cueVideoById(yt_id_cued);
-                // hide the player because there is no selection
-                show_player(false);
-              }, 10);
-            }
-          }
-        }
-        btn_skip_next.hidden = (0 == play_list.childElementCount);
-        show_toast(duration_of_cued);
-      }
-
-      // ----- add a video to the play queue ---//
-      function add_video(yt_id, duration_secs, vid_title, is_quick, insert_top) {
-        if (document.getElementById(`col_${yt_id}`) || (yt_id_cued == yt_id)) return false;
-        const title = !vid_title ? "(see thumbnail)" : vid_title
-        vid_list.insertAdjacentHTML(insert_top ? "afterbegin" : "beforeend",
-          `
-                                      <div id="col_${yt_id}" class="col">
-                                        <div id="vc_${yt_id}" class="card h-100 videoCard" data-selected="0" data-id="${yt_id}" data-title="${title}" data-duration="${duration_secs}" onclick="javascript:return video_selected_global(this);">
-                                         <span hidden class="position-absolute top-0 start-50 translate-middle badge rounded-pill bg-danger">selected</span>
-                                          <img src="https://img.youtube.com/vi/${yt_id}/hqdefault.jpg" class="card-img-top" />
-                                          <div class="card-body">
-                                            <h5  class="card-title">Duration <span class="lxgw">${total_seconds_to_hhmmss(duration_secs)}</span></h5>
-                                            <p class="roboto lead">${title}</p>
-                                          </div>
-                                          <div class="card-footer">
-                                            <div class="text-center" ${!is_quick ? "" : "hidden"} ><small class="text-body-secondary font-monospace">${yt_id}</small></div>
-                                            <div ${is_quick ? "" : "hidden"} class="hstack gap-3 border-0">
-                                                <div><small class="text-body-secondary font-monospace">${yt_id}</small></div>
-                                                <div class="ms-auto"><a role="button" class="icon-link" onclick="javascript:setTimeout(() => {document.getElementById('col_${yt_id}').remove(); window.chrome.webview.postMessage('fav_remove_${yt_id}'); const y = document.getElementById('pl_${yt_id}'); if(y) {y.remove();} show_toast_global(0);}, 10)"><i class="bi bi-trash3"></i></a></div>
-                                            </div>
-                                          </div>
-                                        </div>
-                                      </div>
-                                  `
-        )
-        return true;
-      }
-      // ----- calculates the total duration of queued videos ---//
-      function get_queued_duration(duration) {
-        if (0 == duration) duration = player.getDuration() - player.getCurrentTime();
-        if (!isNaN(duration)) {
-          play_list.querySelectorAll('li').forEach(listItem => {
-            duration += parseInt(listItem.dataset.duration);
-          });
-        }
-        pending_duration.innerText = total_seconds_to_hhmmss(duration);
-        return pending_duration.innerText;
-      }
-      // ----- clock pulse -------- //
-      let intervalId = setInterval(() => {
-        const now = new Date();
-        sp_current_time.innerText = now.toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true });
-        if (exit_date <= now) {
-          clearInterval(intervalId);
-          window.chrome.webview.postMessage("close");
-        }
-        if (YT.PlayerState.PLAYING == player.getPlayerState()) {
-          pending_duration.innerText = get_queued_duration(0);
-        }
-      }, 1000);
-      // -------- toast popup on video addition deletion ----------- //
-      function show_toast(duration, overriding_msg) {
-        setTimeout(() => {
-          const text = overriding_msg ? overriding_msg : get_queued_duration(duration);
-          if (text) { play_time.innerText = text; bootstrap.Toast.getOrCreateInstance(toast).show(); }
-        }, 10);
-      }
-      show_toast_global = show_toast;
-      video_selected_global = video_selected;
-      add_video_global = add_video;
-    }
-    let show_toast_global, video_selected_global, add_video_global;
-    function mark_video_card_selected(card, selected) {
-      card.dataset.selected = selected ? "1" : "0";
-      card.querySelector("span.badge").hidden = !selected;
-    }
-    function slide_push_playlist_item_down(idToMove) {
-      const childToMove = document.getElementById(idToMove);
-      const parentElement = childToMove.parentNode;
-      const nextSibling = childToMove.nextElementSibling;
-      if (nextSibling) {
-        parentElement.insertBefore(childToMove, nextSibling.nextElementSibling);
-      } else {
-        parentElement.insertBefore(childToMove, parentElement.firstElementChild);
-      }
-    }
-    function video_selected_global_by_Id(yt_id) {
-      video_selected_global(document.getElementById(`vc_${yt_id}`));
-    }
-
-    function set_theme(theme) {
-      document.getElementById("chk_change_theme").checked = theme === "dark";
-      document.documentElement.dataset.bsTheme = theme;
-    }
-    function set_play_starts_on_selection(start) {
-      document.getElementById("chk_play_on_selection").checked = start;
-    }
+    window.onload = documentLoaded;
   </script>
-  <script>
-    // ----------- video player ------- //
-    var tag = document.createElement('script');
-    tag.src = "https://www.youtube.com/iframe_api";
-    var firstScriptTag = document.getElementsByTagName('script')[0];
-    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-    var player;
-    // --------- show hide player -------- //
-    function show_player(show) {
-      document.getElementById("player_box").hidden = !show;
-      document.getElementById("help_box").hidden = show;
-      if (!show) yt_id_cued = "";
-    }
-    function onYouTubeIframeAPIReady() {
-      player = new YT.Player('_player', {
-        playerVars: {
-          'playsinline': 1
-        },
-        events: {
-          'onStateChange': onPlayerStateChange,
-          'onError': onErrorOrEnd
-        }
-      });
-    }
-    function load_playlist_item(item, check_player_state) {
-      const yt_id = item.id.slice(3);
-      if (check_player_state && (YT.PlayerState.PLAYING != player.getPlayerState())) {
-        player.cueVideoById(yt_id)
-      } else player.loadVideoById(yt_id);
-      item.remove();
-      mark_video_card_selected(document.getElementById(`vc_${yt_id_cued}`), false);
-      yt_id_cued = yt_id;
-      btn_skip_next.hidden = (0 == play_list.childElementCount);
-    }
-    function onErrorOrEnd(event) {
-      const first_queued = play_list.firstElementChild;
-      if (first_queued) {
-        load_playlist_item(first_queued);
-      } else {
-        setTimeout(() => {
-          mark_video_card_selected(document.getElementById(`vc_${yt_id_cued}`), false);
-          // cue back for consistency
-          player.cueVideoById(yt_id_cued);
-          yt_id_cued = "";
-          if (document.getElementById("chk_close_on_play_stop").checked || document.getElementById("chk_shut_on_exit").checked) {
-            window.chrome.webview.postMessage("close");
-          }
-        }, 10);
-        btn_skip_next.hidden = true;
-      }
-    }
-    function onPlayerStateChange(event) {
-      if (event.data == YT.PlayerState.ENDED) {
-        onErrorOrEnd(event);
-      }
-    }
-  </script>
-  <script type="text/javascript">
-    // -------- helpers ----------- //
-    function total_seconds_to_hhmmss(duration) {
-      if (isNaN(duration)) return "";
-      const HH = `${Math.floor(duration / 3600)}`.padStart(2, '0');
-      const MM = `${Math.floor(duration / 60) % 60}`.padStart(2, '0');
-      const SS = `${Math.floor(duration % 60)}`.padStart(2, '0');
-      return duration > 3600 ? [HH, MM, SS].join(':') : [MM, SS].join(':');
-    }
-    function durationToSeconds(durationString) {
-      if (!durationString) {
-        return null;
-      }
-      const parts = durationString.split(':');
-      if ((parts.length != 3) && (parts.length != 2)) {
-        console.warn("Invalid duration string format. Expected HH:MM:SS.");
-        return null;
-      }
-      const hours = parts.length == 3 ? parseInt(parts[0], 10) : 0;
-      const minutes = parts.length == 3 ? parseInt(parts[1], 10) : parseInt(parts[0], 10);
-      const seconds = parts.length == 3 ? parseInt(parts[2], 10) : parseInt(parts[1], 10);
-      if (isNaN(hours) || isNaN(minutes) || isNaN(seconds)) {
-        console.warn("Invalid number in duration string.");
-        return null;
-      }
-      return (hours * 3600) + (minutes * 60) + seconds;
-    }
-    function youtube_parser(url) {
-      if (url.length < 12) return url;
-      var regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
-      var match = url.match(regExp);
-      return (match && match[7].length == 11) ? match[7] : "";
-    }
-    function populateTimePicker(minutesId, secondsId) {
-      const minutesSelect = document.getElementById(minutesId);
-      const secondsSelect = document.getElementById(secondsId);
-
-      for (let i = 0; i < 60; i++) {
-        const minuteOption = document.createElement('option');
-        minuteOption.value = i;
-        minuteOption.textContent = String(i).padStart(2, '0');
-        minutesSelect.appendChild(minuteOption);
-
-        const secondOption = document.createElement('option');
-        secondOption.value = i;
-        secondOption.textContent = String(i).padStart(2, '0');
-        secondsSelect.appendChild(secondOption);
-      }
-    }
-  </script>
-
 </body>
 </html>
 

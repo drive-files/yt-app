@@ -78,6 +78,34 @@ namespace YutubeApp {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to document.addEventListener(&quot;DOMContentLoaded&quot;, () =&gt; {
+        ///  let idleMouseTimer;
+        ///  const hideCursorDelay = 3000; // 3 seconds
+        ///
+        ///  function hideCursor() {
+        ///    document.body.style.cursor = &quot;none&quot;;
+        ///  }
+        ///
+        ///  function showCursor() {
+        ///    document.body.style.cursor = &quot;default&quot;; // Or &quot;auto&quot;
+        ///  }
+        ///
+        ///  // Function to reset the timer and show the cursor
+        ///  function resetIdleTimer() {
+        ///    clearTimeout(idleMouseTimer);
+        ///    showCursor();
+        ///    idleMouseTimer = setTimeout(hideCursor, hideCursorDelay);
+        ///  }
+        ///
+        ///  // Listen for mouse moveme [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string js {
+            get {
+                return ResourceManager.GetString("js", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
         internal static byte[] sample {

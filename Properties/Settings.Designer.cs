@@ -59,5 +59,53 @@ namespace YutubeApp.Properties {
                 this["FavoriteLinks"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0, 0")]
+        public global::System.Drawing.Size LastWindowSize {
+            get {
+                return ((global::System.Drawing.Size)(this["LastWindowSize"]));
+            }
+            set {
+                this["LastWindowSize"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0, 0")]
+        public global::System.Drawing.Point LastWindowPosition {
+            get {
+                return ((global::System.Drawing.Point)(this["LastWindowPosition"]));
+            }
+            set {
+                this["LastWindowPosition"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool IsTitleBarHidden {
+            get {
+                return ((bool)(this["IsTitleBarHidden"]));
+            }
+            set {
+                this["IsTitleBarHidden"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("4")]
+        public int PlaylistCols {
+            get {
+                return ((int)(this["PlaylistCols"]));
+            }
+            set {
+                this["PlaylistCols"] = value;
+            }
+        }
     }
 }

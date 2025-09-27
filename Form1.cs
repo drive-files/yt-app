@@ -1,7 +1,9 @@
 using Microsoft.Web.WebView2.Core;
 using System.Diagnostics;
+using System.DirectoryServices.ActiveDirectory;
+using System.IO;
+using System.Media;
 using System.Net;
-using System.Security.Policy;
 namespace YutubeApp;
 public partial class Form1 : Form
 {
@@ -15,6 +17,7 @@ public partial class Form1 : Form
     SetScreenSmall();
     InitializeWebView2();
   }
+
   void SetScreenSmall()
   {
     var screenSize = Screen.FromControl(this).WorkingArea;
@@ -22,15 +25,24 @@ public partial class Form1 : Form
     Width = (9 * screenSize.Width) / 10;
     Top = 20;
     Left = screenSize.Width / 20;
+
+    if (Properties.Settings.Default.LastWindowSize == Size.Empty)
+    {
+      Properties.Settings.Default.LastWindowSize = Size;
+      Properties.Settings.Default.LastWindowPosition = Location;
+      Properties.Settings.Default.IsTitleBarHidden = false;
+      Properties.Settings.Default.Save();
+    }
   }
   string? url;
   private async void InitializeWebView2()
   {
+    wvMain.Visible = false;
     var op = new CoreWebView2EnvironmentOptions("--disable-web-security");
     var env = await CoreWebView2Environment.CreateAsync(null, Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "YutubeApp"), op);
     await wvMain.EnsureCoreWebView2Async(env);
+    await wvMain.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(Res.js);
     wvMain.CoreWebView2.Navigate(url);
-
   }
   private void WvMain_CoreWebView2InitializationCompleted(object sender, CoreWebView2InitializationCompletedEventArgs e)
   {
@@ -41,32 +53,32 @@ public partial class Form1 : Form
     wvMain.NavigationStarting += (e, a) => wvMain.Enabled = false;
     wvMain.NavigationCompleted += async (e, a) =>
     {
-      foreach(string? u in Properties.Settings.Default.FavoriteLinks)
+      foreach (string? u in Properties.Settings.Default.FavoriteLinks)
       {
-        if (!string.IsNullOrEmpty(u))
+        if (string.IsNullOrEmpty(u)) continue;
+        string url = u;
+        int duration = 30;
+        int indexOfHash;
+        if (-1 != (indexOfHash = (url.IndexOf('#'))))
         {
-          string url = u;
-          int duration = 30;
-          int i;
-          if(-1 != (i = (url.IndexOf('#'))))
+          try
           {
-            try
-            {
-              duration = Int32.Parse(url.Substring(i + 1));
-            }
-            catch
-            {
-
-            }
-            url = url.Remove(i);
+            duration = Int32.Parse(url.Substring(indexOfHash + 1));
           }
-          await wvMain.CoreWebView2.ExecuteScriptAsync($"add_video_global('{url}', {duration}, '', true, false)");
+          catch
+          {
+
+          }
+          url = url.Remove(indexOfHash);
         }
+        await wvMain.CoreWebView2.ExecuteScriptAsync($"add_video_global('{url}', {duration}, '', true, false)");
       }
       // set theme
       await wvMain.CoreWebView2.ExecuteScriptAsync($"set_theme('{Properties.Settings.Default.Theme}');");
       await wvMain.CoreWebView2.ExecuteScriptAsync($"set_play_starts_on_selection('{(Properties.Settings.Default.PlayOnSel ? "1" : string.Empty)}');");
+      await wvMain.CoreWebView2.ExecuteScriptAsync($"set_pl_columns_global({Properties.Settings.Default.PlaylistCols});");
       wvMain.Enabled = true;
+      lblLoading.Visible = false;
       if (!wvMain.Visible) wvMain.Visible = true;
     };
     wvMain.CoreWebView2.NewWindowRequested += async (s, e) =>
@@ -74,7 +86,7 @@ public partial class Form1 : Form
       if (e.Handled = !e.Uri.Contains("drive-files"))
       {
         string url = await wvMain.CoreWebView2.ExecuteScriptAsync($"youtube_parser('{e.Uri}');");
-        if (!string.IsNullOrEmpty(url))
+        if (url.Length > 10)
         {
           await wvMain.CoreWebView2.ExecuteScriptAsync($"add_video_global({url}, 30, '', true, true)");
           await wvMain.CoreWebView2.ExecuteScriptAsync($"video_selected_global_by_Id({url})");
@@ -136,6 +148,35 @@ public partial class Form1 : Form
       Properties.Settings.Default.PlayOnSel = message.EndsWith("On");
       Properties.Settings.Default.Save();
     }
+    else if (message.StartsWith("pl_cols_"))
+    {
+      Properties.Settings.Default.PlaylistCols = Int32.Parse(message.Substring(8));
+      Properties.Settings.Default.Save();
+    }
+    else if (message.StartsWith("pos_"))
+    {
+      if (message.EndsWith("save"))
+      {
+        if (WindowState == FormWindowState.Normal)
+        {
+          Properties.Settings.Default.LastWindowSize = Size;
+          Properties.Settings.Default.LastWindowPosition = Location;
+          Properties.Settings.Default.IsTitleBarHidden = (FormBorderStyle == FormBorderStyle.None);
+          MessageBox.Show(this, "Saved! The restore button at the top will set the window to this position and size.", Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+        else MessageBox.Show(this, "Nothing to save, the app is running maximized.", Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
+      }
+      else
+      {
+        var screenSize = Screen.FromControl(this).WorkingArea;
+        Properties.Settings.Default.LastWindowSize = new Size((9 * screenSize.Width) / 10, (9 * screenSize.Height) / 10);
+        Properties.Settings.Default.LastWindowPosition = new Point(screenSize.Width / 20, 20);
+        Properties.Settings.Default.IsTitleBarHidden = false;
+        MessageBox.Show(this, "Saved! The restore button at the top will set the window to the factory position and size.", Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
+      }
+
+      Properties.Settings.Default.Save();
+    }
     else if (message.StartsWith("fav_add_"))
     {
       System.Collections.Specialized.StringCollection col = Properties.Settings.Default.FavoriteLinks ?? new System.Collections.Specialized.StringCollection();
@@ -168,7 +209,9 @@ public partial class Form1 : Form
         if (WindowState == FormWindowState.Maximized)
         {
           WindowState = FormWindowState.Normal;
-          FormBorderStyle = FormBorderStyle.Sizable;
+          Size = Properties.Settings.Default.LastWindowSize;
+          Location = Properties.Settings.Default.LastWindowPosition;
+          FormBorderStyle = Properties.Settings.Default.IsTitleBarHidden ? FormBorderStyle.None : FormBorderStyle.Sizable;
         }
         else if (WindowState == FormWindowState.Normal)
         {
@@ -181,6 +224,10 @@ public partial class Form1 : Form
         shutOnExit = false;
         Close();
       }
+    }
+    else if (message.Equals("form_border_hide"))
+    {
+      if (!isInNCArea) FormBorderStyle = FormBorderStyle.None;
     }
     else MessageBox.Show(message);
   }
@@ -229,12 +276,37 @@ public partial class Form1 : Form
       Process.Start("shutdown", "/s /t 0");
     }
   }
-
   private void Form1_SizeChanged(object sender, EventArgs e)
   {
     if (WindowState == FormWindowState.Maximized)
     {
       FormBorderStyle = FormBorderStyle.None;
     }
+  }
+
+  bool isInNCArea = false;
+  // Constants for Windows messages
+  private const int WM_NCMOUSEMOVE = 0xA0;
+  private const int WM_NCMOUSELEAVE = 0x2A2;
+  private const int WM_MOVING = 0x0216;
+  private const int WM_SIZING = 0x0214;
+  protected override void WndProc(ref Message m)
+  {
+    switch (m.Msg)
+    {
+      case WM_MOVING:
+      case WM_SIZING:
+      case WM_NCMOUSEMOVE:
+        if (!isInNCArea) isInNCArea = true;
+        m.Result = 0;
+        break;
+
+      case WM_NCMOUSELEAVE:
+        isInNCArea = false;
+        m.Result = 0;
+        break;
+    }
+
+    base.WndProc(ref m);
   }
 }
