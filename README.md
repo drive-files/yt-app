@@ -7,3 +7,5 @@ Player for youtube videos - Windows OS only.
   - Step 3 - Open the .sln (solution) file within the downloaded project folder. Visual Studio will load the project and its dependencies.
   - Step 4 - Press Ctrl + Shift + B or go to Build > Build Solution.
   - Step 5 - You can run it by pressing F5 or clicking the "Start" button.
+# Developer Contact
+Amardeep Singh amardeep.developer@gmail.com
