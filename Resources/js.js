@@ -77,9 +77,25 @@ function mark_video_card_selected(card, selected) {
   card.querySelector("span.badge").hidden = !selected;
   show_hide_add_random_videos_to_playlist();
 }
+function close_file(sender) {
+  sender.hidden = true;
+  clear_playlist_global();
+  setTimeout(() => {
+    let arr = new Array();
+    for (const child of vid_list.children) {
+      if (document.getElementById(`is_quick${child.id.substring(4)}`).hidden) arr.push(child.id);
+    }
+    for (let i = 0; i < arr.length; i++) {
+      document.getElementById(arr[i]).remove();
+    }
+    btn_add_random_videos.hidden = true;
+    btn_clear_playlist.hidden = true;
+    if(0 == document.querySelectorAll('.videoCard[data-selected="1"]').length) show_player(false);
+  }, 10);
+}
 function show_hide_add_random_videos_to_playlist() {
   if (vid_list.childElementCount > MIN_ELEMENTS_FOR_SHUFFLE_IN_PL) {
-    btn_add_random_videos.hidden = (document.querySelectorAll('.videoCard[data-selected="1"]').length > (MIN_ELEMENTS_FOR_SHUFFLE_IN_PL/2));
+    btn_add_random_videos.hidden = (document.querySelectorAll('.videoCard[data-selected="1"]').length > (MIN_ELEMENTS_FOR_SHUFFLE_IN_PL / 2));
   }
   btn_clear_playlist.hidden = 0 == play_list.childElementCount;
 }
@@ -205,7 +221,12 @@ function documentLoaded() {
         show_player(false);
         alert("There was an error reading the excel file. Get the sample, and retry.");
       }
+      else {
+        document.getElementById("close_file_btn").hidden = false;
+      }
       show_hide_add_random_videos_to_playlist();
+      event.target.value = "";
+      
     };
     reader.readAsArrayBuffer(file);
   }

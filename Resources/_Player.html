@@ -88,7 +88,7 @@
           <button type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasRight" class="btn btn-success display-3 rounded-circle btn-lg border-secondary border-5"><i class="bi bi-music-note-list"></i> <i class="bi bi-arrow-bar-right"></i> <span class="font-monospace small d-block" id="pending_duration"></span></button>
         </div>
         <div class="my-3">
-          <label for="formFile" class="form-label">Open Playlist Excel File (clock <span class="font-monospace small" id="sp_current_time"></span>)</label>
+          <label for="formFile" class="form-label"><i class="bi bi-music-player-fill"></i> Open Playlist Excel&nbsp;<a id="close_file_btn" hidden  class="link-offset-3" href="javascript:void(0)" onclick="javascript: close_file(this);">Clear&nbsp;list</a></label>
           <input class="form-control" type="file" id="excelFileInput" accept=".xlsx, .xls">
         </div>
         <div class="form-check form-switch mb-3">
@@ -105,6 +105,9 @@
             <label class="form-check-label small" id="lbl_for_chk_force_exit" for="switchCheckDefault">Max&nbsp;Play&nbsp;mins&rarr;</label>
           </div>
           <div><input class="form-control small" type="number" value="2" min="2" max="90" step="1" id="exit_time" /></div>
+        </div>
+        <div class="mt-1">
+          <i class="bi bi-clock"></i> <span class="font-monospace small" id="sp_current_time"></span>
         </div>
         <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasRight">
           <div class="offcanvas-header">
